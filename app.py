@@ -299,17 +299,33 @@ def tier_home_brands(val):
 # -------------------------
 # Upload and read
 # -------------------------
-uploaded = st.file_uploader("Upload your Excel/CSV (sheet with raw metric columns)", type=["xlsx","xls","csv"])
+
+uploaded = st.file_uploader(
+    "Upload your Excel/CSV file",
+    type=["xlsx", "xls", "csv"]
+)
+
 if uploaded is None:
     st.stop()
 
-try:
-    xl = pd.ExcelFile(uploaded)
-    sheet = st.selectbox("Select sheet", options=xl.sheet_names, index=0)
-    df = pd.read_excel(uploaded, sheet_name=sheet)
-except Exception:
-    uploaded.seek(0)
-    df = pd.read_csv(uploaded)
+file_name = uploaded.name.lower()
+
+# If Excel file
+if file_name.endswith(".xlsx") or file_name.endswith(".xls"):
+    df = pd.read_excel(uploaded)
+
+# If CSV file
+elif file_name.endswith(".csv"):
+    try:
+        df = pd.read_csv(uploaded, encoding="utf-8")
+    except:
+        uploaded.seek(0)
+        df = pd.read_csv(uploaded, encoding="latin1")
+
+# If wrong file
+else:
+    st.error("Please upload Excel or CSV file")
+    st.stop()
 
 st.subheader("Preview uploaded table (top rows)")
 st.dataframe(df.head())
